@@ -1,18 +1,19 @@
 import React from "react";
-import ReactDOM from "react-dom/client";
-import HEADER from "./components/HEADER";
-import BODY from "./components/BODY";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Body from "./components/Body";
+import { UserProvider } from "./utils/UserContext";
 
-const APPLayout = () => {
-    return (
-        <div className="App">
-            <HEADER/>
-            <BODY/>
-        </div>
-    );
-};
+function App() {
+  return (
+    <UserProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Body />} />
+          {/* Add other routes like restaurant details if needed */}
+        </Routes>
+      </Router>
+    </UserProvider>
+  );
+}
 
-
-const root = ReactDOM.createRoot(document.getElementById("root"));
-
-root.render(<APPLayout/>);
+export default App;

@@ -1,49 +1,54 @@
 import Shimmer from "./Shimmer";
 import { useParams } from "react-router-dom";
-import useRestaurantMenu from "../utils/useRestrauntMenu";
+import { useEffect, useState } from "react";
 import RestaurantCategory from "./RestaurantCategory";
-import { useState } from "react";
 
 const RestaurantMenu = () => {
   const { resId } = useParams();
 
-  const dummy = "Dummy Data";
-
-  const resInfo = useRestaurantMenu(resId);
-
+  const [resInfo, setResInfo] = useState(null);
   const [showIndex, setShowIndex] = useState(null);
 
-  if (resInfo === null) return <Shimmer />;
+  useEffect(() => {
+    const fetchRestaurant = async () => {
+      try {
+        const res = await fetch(`http://localhost:3001/restaurants/${resId}`);
+        const data = await res.json();
+        setResInfo(data);
+      } catch (error) {
+        console.error("Error fetching restaurant menu:", error);
+      }
+    };
+    fetchRestaurant();
+  }, [resId]);
 
-  const { name, cuisines, costForTwoMessage } =
-    resInfo?.cards[0]?.card?.card?.info;
+  if (!resInfo) return <Shimmer />;
 
-  const { itemCards } =
-    resInfo?.cards[2]?.groupedCard?.cardGroupMap?.REGULAR?.cards[1]?.card?.card;
+  const { name, avgRating, costForTwo, deliveryTime, menu } = resInfo;
 
-  const categories =
-    resInfo?.cards[2]?.groupedCard?.cardGroupMap?.REGULAR?.cards.filter(
-      (c) =>
-        c.card?.["card"]?.["@type"] ===
-        "type.googleapis.com/swiggy.presentation.food.v2.ItemCategory"
-    );
-  //console.log(categories);
+  // Convert menu object into categories array for accordions
+  const categories = [
+    { title: "Recommended", items: menu.recommended },
+    { title: "Starters", items: menu.starters },
+    { title: "Main Course", items: menu.mainCourse }
+  ];
 
   return (
-    <div className="text-center">
-      <h1 className="font-bold my-6 text-2xl">{name}</h1>
-      <p className="font-bold text-lg">
-        {cuisines.join(", ")} - {costForTwoMessage}
+    <div className="text-center max-w-3xl mx-auto my-6">
+      <h1 className="font-bold text-3xl mb-2">{name}</h1>
+      <p className="text-lg font-semibold mb-4">
+        Rating: ⭐ {avgRating} | Cost for Two: ₹{costForTwo} | Delivery: {deliveryTime}
       </p>
-      {/* categories accordions */}
+
+      {/* Categories Accordion */}
       {categories.map((category, index) => (
-        // controlled component
         <RestaurantCategory
-          key={category?.card?.card.title}
-          data={category?.card?.card}
-          showItems={index === showIndex ? true : false}
-          setShowIndex={() => setShowIndex(index)}
-          dummy={dummy}
+          key={category.title}
+          data={category}
+          showItems={index === showIndex}
+          setShowIndex={() =>
+            setShowIndex(index === showIndex ? null : index)
+          }
         />
       ))}
     </div>

@@ -1,60 +1,51 @@
-import { LOGO_URL } from "../utils/constants";
-import { useState, useContext } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import useOnlineStatus from "../utils/useOnlineStatus";
-import UserContext from "../utils/UserContext";
-import { useSelector } from "react-redux";
+import { LOGO_URL } from "../utils/constants";
 
 const Header = () => {
-  const [btnNameReact, setBtnNameReact] = useState("Login");
-
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isVegOnly, setIsVegOnly] = useState(false);
   const onlineStatus = useOnlineStatus();
 
-  const { loggedInUser } = useContext(UserContext);
-  //console.log(loggedInUser);
-
-  // Subscribing to the store using a Selector
-  const cartItems = useSelector((store) => store.cart.items);
-  //console.log(cartItems);
+  const handleLoginToggle = () => setIsLoggedIn(!isLoggedIn);
+  const handleVegToggle = () => setIsVegOnly(!isVegOnly);
 
   return (
-    <div className="flex justify-between bg-pink-100 shadow-lg sm:bg-yellow-50 lg:bg-green-50">
-      <div className="logo-container">
-        <img className="w-56" src={LOGO_URL} />
+    <header className="flex justify-between items-center p-4 bg-white bg-opacity-70 shadow-md fixed w-full top-0 z-50 backdrop-blur-md">
+      <div className="logo">
+        <img src={LOGO_URL} alt="Logo" className="h-10" />
       </div>
-      <div className="flex items-center">
-        <ul className="flex p-4 m-4">
-          <li className="px-4">Online Status: {onlineStatus ? "✅" : "🔴"}</li>
-          <li className="px-4">
-            <Link to="/">Home</Link>
-          </li>
-          <li className="px-4">
-            <Link to="/about">About Us</Link>
-          </li>
-          <li className="px-4">
-            <Link to="/contact">Contact Us</Link>
-          </li>
-          <li className="px-4">
-            <Link to="/grocery">Grocery</Link>
-          </li>
-          <li className="px-4 font-bold text-xl">
-            <Link to="/cart">Cart - ({cartItems.length} items)</Link>
-          </li>
-          <button
-            className="login"
-            onClick={() => {
-              btnNameReact === "Login"
-                ? setBtnNameReact("Logout")
-                : setBtnNameReact("Login");
-            }}
-          >
-            {btnNameReact}
-          </button>
 
-          <li className="px-4 ">{loggedInUser}</li>
-        </ul>
+      <nav className="flex space-x-6">
+        <Link to="/" className="hover:text-blue-500">Home</Link>
+        <Link to="/about" className="hover:text-blue-500">About</Link>
+        <Link to="/contacts" className="hover:text-blue-500">Contacts</Link>
+        <Link to="/grocery" className="hover:text-blue-500">Grocery</Link>
+      </nav>
+
+      <div className="flex items-center space-x-4">
+        <span className={onlineStatus ? "text-green-500" : "text-red-500"}>
+          {onlineStatus ? "Online" : "Offline"}
+        </span>
+
+        <button
+          onClick={handleVegToggle}
+          className={`px-3 py-1 rounded ${
+            isVegOnly ? "bg-green-500 text-white" : "bg-gray-200"
+          }`}
+        >
+          Veg Only
+        </button>
+
+        <button
+          onClick={handleLoginToggle}
+          className="px-3 py-1 rounded bg-blue-500 text-white"
+        >
+          {isLoggedIn ? "Logout" : "Login"}
+        </button>
       </div>
-    </div>
+    </header>
   );
 };
 

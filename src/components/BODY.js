@@ -1,116 +1,86 @@
 import RestaurantCard, { withPromtedLabel } from "./RestaurantCard";
-import { useState, useEffect, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import Shimmer from "./Shimmer";
 import { Link } from "react-router-dom";
 import useOnlineStatus from "../utils/useOnlineStatus";
 import UserContext from "../utils/UserContext";
+import restaurants from "../utils/Api";
 
 const Body = () => {
-  // Local State Variable - Super powerful variable
-  const [listOfRestaurants, setListOfRestraunt] = useState([]);
+  const [listOfRestaurants, setListOfRestaurants] = useState([]);
   const [filteredRestaurant, setFilteredRestaurant] = useState([]);
-
   const [searchText, setSearchText] = useState("");
 
   const RestaurantCardPromoted = withPromtedLabel(RestaurantCard);
 
-  // Whenever state variables update, react triggers a reconciliation cycle(re-renders the component)
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    const data = await fetch(
-      "https://www.swiggy.com/dapi/restaurants/list/v5?lat=12.9351929&lng=77.62448069999999&page_type=DESKTOP_WEB_LISTING"
-    );
-
-    const json = await data.json();
-
-    // Optional Chaining
-    setListOfRestraunt(
-      json?.data?.cards[2]?.card?.card?.gridElements?.infoWithStyle?.restaurants
-    );
-    setFilteredRestaurant(
-      json?.data?.cards[2]?.card?.card?.gridElements?.infoWithStyle?.restaurants
-    );
-  };
-
+  const { loggedInUser, setUserName } = useContext(UserContext);
   const onlineStatus = useOnlineStatus();
 
-  if (onlineStatus === false)
-    return (
-      <h1>
-        Looks like you're offline!! Please check your internet connection;
-      </h1>
-    );
+  useEffect(() => {
+    setListOfRestaurants(restaurants);
+    setFilteredRestaurant(restaurants);
+  }, []);
 
-  const { loggedInUser, setUserName } = useContext(UserContext);
+  if (!onlineStatus)
+    return <h1>Looks like you're offline!! Please check your internet connection</h1>;
 
-  return listOfRestaurants.length === 0 ? (
-    <Shimmer />
-  ) : (
+  if (listOfRestaurants.length === 0) return <Shimmer />;
+
+  return (
     <div className="body">
-      <div className="filter flex">
+      <div className="filter flex flex-wrap">
         <div className="search m-4 p-4">
           <input
             type="text"
-            data-testid="searchInput"
-            className="border border-solid border-black"
             value={searchText}
-            onChange={(e) => {
-              setSearchText(e.target.value);
-            }}
+            placeholder="Search restaurants..."
+            className="border border-black p-2"
+            onChange={(e) => setSearchText(e.target.value)}
           />
           <button
             className="px-4 py-2 bg-green-100 m-4 rounded-lg"
             onClick={() => {
-              // Filter the restraunt cards and update the UI
-              // searchText
-              console.log(searchText);
-
-              const filteredRestaurant = listOfRestaurants.filter((res) =>
-                res.info.name.toLowerCase().includes(searchText.toLowerCase())
+              const filtered = listOfRestaurants.filter((res) =>
+                res.name.toLowerCase().includes(searchText.toLowerCase())
               );
-
-              setFilteredRestaurant(filteredRestaurant);
+              setFilteredRestaurant(filtered);
             }}
           >
             Search
           </button>
         </div>
-        <div className="search m-4 p-4 flex items-center">
+
+        <div className="search m-4 p-4">
           <button
             className="px-4 py-2 bg-gray-100 rounded-lg"
             onClick={() => {
-              const filteredList = listOfRestaurants.filter(
-                (res) => res.info.avgRating > 4
+              const filtered = listOfRestaurants.filter(
+                (res) => res.avgRating > 4
               );
-              setFilteredRestaurant(filteredList);
+              setFilteredRestaurant(filtered);
             }}
           >
             Top Rated Restaurants
           </button>
         </div>
+
         <div className="search m-4 p-4 flex items-center">
-          <label>UserName : </label>
+          <label>UserName: </label>
           <input
-            className="border border-black p-2"
+            className="border border-black p-2 ml-2"
             value={loggedInUser}
             onChange={(e) => setUserName(e.target.value)}
           />
         </div>
       </div>
+
       <div className="flex flex-wrap">
         {filteredRestaurant.map((restaurant) => (
-          <Link
-            key={restaurant?.info.id}
-            to={"/restaurants/" + restaurant?.info.id}
-          >
-            {restaurant?.info.promoted ? (
-              <RestaurantCardPromoted resData={restaurant?.info} />
+          <Link key={restaurant.id} to={"/restaurants/" + restaurant.id}>
+            {restaurant.promoted ? (
+              <RestaurantCardPromoted resData={restaurant} />
             ) : (
-              <RestaurantCard resData={restaurant?.info} />
+              <RestaurantCard resData={restaurant} />
             )}
           </Link>
         ))}
